@@ -1,0 +1,271 @@
+<html>
+<head>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="sankey.js"></script>
+<script src="https://rawgit.com/misoproject/d3.chart/master/d3.chart.min.js"></script>
+<script src="https://rawgit.com/q-m/d3.chart.sankey/master/d3.chart.sankey.min.js"></script>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<style>
+body { font-family: "Futura"; background-color: #eee; }
+/* svg { border: solid black 1px; } */
+text {
+  font-size: 12px;
+}
+.tooltip {	
+    position: absolute;			
+    text-align: center;			
+    width: 260px;					
+    height: 70px;					
+    padding: 2px;				
+    font: 12px Futura;		
+    background: rgba(0, 0, 0, 0.8);	
+    color: gold;
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;			
+}
+
+.button {
+    background-color: white;
+    color: black;
+    border: 2px solid #555555;
+    border-radius: 8px;
+    font-size: 20px;
+    padding: 15px;
+    width: 200px; 
+    margin: 30px 40px 0 0;
+    opacity: 0.0;
+    -webkit-transition-duration: 0.4s;
+    transition-duration: 0.4s;
+}
+.button:hover {
+    background-color: #555555;
+    color: white;
+}
+
+#chart {
+    height: 500px;
+    font: 13px sans-serif;
+}
+
+.node rect {
+fill-opacity: .9;
+shape-rendering: crispEdges;
+stroke-width: 0;
+}
+
+.node text {
+text-shadow: 0 1px 0 #fff;
+}
+
+.link {
+fill: none;
+stroke: #000;
+stroke-opacity: .2;
+}
+
+</style>
+
+</head>
+<body>
+<title>College Majors</title>
+<h3>Which major to choose?</h3>
+
+<div id = "bubbles" style = "text-align: center"></div>
+
+<div style = "text-align: center">
+	<span id = "category"></span>
+</div>
+
+<div id = "buttons" style = "text-align: center">
+	<button id = "button1" class = "button">Salary</button>
+	<button id = "button2" class = "button">Gender Ratio</button>
+	<button id = "button3" class = "button">Employed Ratio</button>
+</div>
+
+<div id="sankey"></div>
+
+<script>
+var height = 900;
+var width = 900;
+var padding = 50;
+
+var svg = d3.select("#bubbles").append("svg").attr("height", height).attr("width", width);
+var rScale;
+	
+var tooltip = d3.select("body")
+.append("div")
+.attr("class", "tooltip")
+.style("opacity", 0.0);
+
+var percentFormat = d3.format(".1%");
+var numberFormat = d3.format(".4s");
+
+// Abstract data elements
+var majors, categories;
+var majorInfo, categoryInfo;
+var jobs;
+
+var color = d3.scale.category20();
+
+d3.csv("recent-grads.csv", function (error, data) {
+	majorInfo = data;
+
+	majors = majorInfo.map(function (info) {
+		// Create shorter variable names
+		return {
+			rank: info["Rank"],
+			major: info["Major"],
+			category: info["Major_category"],
+			total: Number(info["Men"]) + Number(info["Women"]),
+			genderRatio: Number(info["ShareWomen"]),
+			employedRatio: 1 - Number(info["Unemployment_rate"]),
+			earning: Number(info["Median"])
+		};
+	})
+});
+
+var nodes;
+var dataobj;
+
+d3.csv("categories.csv", function (error, data) {
+	categoryInfo = data;
+
+	categories = categoryInfo.map(function (info) {
+		// Create shorter variable names
+		return {
+			category: info["Major_category"],
+			total: Number(info["Total"]),
+			genderRatio: Number(info["ShareWomen"]),
+			employedRatio: 1 - Number(info["Unemployment_rate"]),
+			earning: Number(info["Median"]),
+			short: info["Short"]
+		};
+	})
+
+	var bubble = d3.layout.pack()
+    .sort(null)
+    .size([height, width])
+    .padding(2)
+    .value(function(d) { return d.total; });
+
+	dataobj = { children: categories };
+	nodes = bubble.nodes(dataobj);
+	nodes = nodes.filter(function (it) { return it.parent; });
+
+	d3.select("svg").selectAll("circle").data(nodes).enter()                           
+    .append("circle")            
+    .attr("cx", function (it) { return it.x; })
+    .attr("cy", function (it) { return it.y; })
+    // .attr("r", function (it) { return 0; })
+    .style("fill", function (it) { return color(it.total); })
+    // .transition()
+    // .duration(1000)
+    // .attr("r", function (it) { return it.r; })
+    // .transition()
+    // .duration(300)
+    // .attr("r", function (it) { return it.r / 1.2; })
+    // .transition()
+    // .duration(300)
+    .attr("r", function (it) { return it.r; })
+    .on("mouseover", function (d) {
+		d3.select(this)
+		.style("fill", "gold")
+		.attr("r", function (it) { return it.r * 1.2; });
+
+		tooltip.html("Category: " + d.category + "<br>Total graduates: " + numberFormat(d.total) + "<br>Female Ratio: " + percentFormat(d.genderRatio) + "<br>Employed Ratio: " + percentFormat(d.employedRatio))
+		.style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY) + "px")
+		.style("opacity", 1.0);
+
+		d3.select("body").style("cursor", "pointer");
+	})
+	.on("mouseout", function (d) {
+		d3.select(this)
+		.style("fill", function (it) { return color(it.total); })
+		.attr("r", function (it) { return it.r; });
+
+		tooltip.style("opacity", 0);
+
+		d3.select("body").style("cursor", "default");
+	})
+	.on("click", function (d) {
+		d3.select("#category").style("color", "purple").transition().duration(600).text(d.category).style("font-size", 30);
+		d3.selectAll("button").transition().duration(600).style("opacity", 1.0);
+	});
+
+    d3.select("svg").selectAll("text").data(nodes).enter()
+    .append("text")
+    .attr("x", function (it) { return it.x; })
+    .attr("y", function (it) { return it.y; })
+    .style("text-anchor", "middle")
+    .style("dominant-baseline", "middle")
+    .text(function (it) { 
+    	if (it.r > 55) return it.category; 
+    	else return it.short;
+    });
+});
+
+//Major Category and Jobs
+//http://bl.ocks.org/wvengen/cab9b01816490edb7083
+    var colors = {
+            'biology':         '#1f77b4',
+            'socialSci':       '#aec7e8',
+            'education':       '#ff7f0e',
+            'psychology':      '#ffbb78',
+            'engineering':     '#2ca02c',
+            'humanitiesArts':  '#98df8a',
+            'agriculture':     '#d62728',
+            'physical':        '#ff9896',
+            'health':          '#9467bd',
+            'business':        '#c5b0d5',
+            'arts':            '#8c564b',
+            'comm':            '#c49c94',
+            'comp':            '#e377c2',
+            'law':             '#f7b6d2',
+            'end':             '#7f7f7f',
+            'fallback':         '#9f9fa3'
+          };
+    var heightS = 700, widthS = 1000, paddingS = 50;
+    d3.json("major_jobs.json", function(error, json) {
+        jobs = json;
+
+        var chart = d3.select("#sankey")
+                        .append("svg")
+                        .attr("height", heightS)
+                        .attr("width", widthS)
+                        .chart("Sankey.Path");
+
+        function label(node) {
+          return node.name;
+        }
+
+        function colorSankey(node, depth) {
+          var id = node.id.replace(/(_score)?(_\d+)?$/, '');
+          if (colors[id]) {
+            return colors[id];
+          } else if (depth > 0 && node.targetLinks && node.targetLinks.length == 1) {
+            //return colorSankey(node.targetLinks[0].source, depth-1);
+            return colors['end'];
+          } else {
+            return null;
+          }
+        }
+
+        chart.name(label)
+                .colorNodes( function(name, node) {
+                    return colorSankey(node, 1) || colors.fallback;
+                })
+                .colorLinks( function(link){
+                    return colorSankey(link.source, 4) || colorSankey(link.target, 1) || colors.fallback;
+                })
+                .nodeWidth(15)
+                .nodePadding(10)
+                .spread(true)
+                .iterations(10)
+                .draw(jobs);
+
+      });
+</script>
+</body>
+</html>
