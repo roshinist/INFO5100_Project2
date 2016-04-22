@@ -1,10 +1,10 @@
 <html>
 <head>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="sankey.js"></script>
-<script src="https://rawgit.com/misoproject/d3.chart/master/d3.chart.min.js"></script>
-<script src="https://rawgit.com/q-m/d3.chart.sankey/master/d3.chart.sankey.min.js"></script>
-<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<script src = "http://d3js.org/d3.v3.min.js"></script>
+<script src = "sankey.js"></script>
+<script src = "https://rawgit.com/misoproject/d3.chart/master/d3.chart.min.js"></script>
+<script src = "https://rawgit.com/q-m/d3.chart.sankey/master/d3.chart.sankey.min.js"></script>
+<link href = 'http://fonts.googleapis.com/css?family=Open+Sans' rel = 'stylesheet' type = 'text/css'>
 <style>
 body { font-family: "Futura"; background-color: #eee; }
 
@@ -18,7 +18,7 @@ text {
     position: absolute;			
     text-align: center;			
     width: 260px;					
-    height: 80px;					
+    height: 90px;					
     padding: 2px;				
     font: 12px Futura;		
     background: rgba(0, 0, 0, 0.8);	
@@ -106,6 +106,8 @@ stroke-opacity: .2;
 	var width = 900;
 	var padding = 50;
 
+	var choosen = 1;
+
 	var svg = d3.select("#bubbles").append("svg").attr("height", height).attr("width", width);
 	var rScale;
 		
@@ -159,7 +161,7 @@ stroke-opacity: .2;
 				earning: Number(info["Median"]),
 				short: info["Short"]
 			};
-		})
+		});
 
 		var bubble = d3.layout.pack()
 	    .sort(null)
@@ -175,23 +177,14 @@ stroke-opacity: .2;
 	    .append("circle")            
 	    .attr("cx", function (it) { return it.x; })
 	    .attr("cy", function (it) { return it.y; })
-	    // .attr("r", function (it) { return 0; })
 	    .style("fill", function (it) { return color2(it.total); })
-	    // .transition()
-	    // .duration(1000)
-	    // .attr("r", function (it) { return it.r; })
-	    // .transition()
-	    // .duration(300)
-	    // .attr("r", function (it) { return it.r / 1.2; })
-	    // .transition()
-	    // .duration(300)
 	    .attr("r", function (it) { return it.r; })
 	    .on("mouseover", function (d) {
 			d3.select(this)
 			.style("fill", "gold")
 			.attr("r", function (it) { return it.r * 1.2; });
 
-			tooltip.html("Category: " + d.name + "<br>Total graduates: " + numberFormat(d.total) + "<br>Female Ratio: " + percentFormat(d.genderRatio) + "<br>Employed Ratio: " + percentFormat(d.employedRatio) + "<br>Median Salary: $" + format(d.earning))
+			tooltip.html("<span style = 'font-size: 17px'>" + "<span style = 'color: #e34a33'>" + d.name + "</span>" + "</span>" + "<br>Total graduates: " + numberFormat(d.total) + "<br>Female Ratio: " + percentFormat(d.genderRatio) + "<br>Employed Ratio: " + percentFormat(d.employedRatio) + "<br>Median Salary: $" + format(d.earning))
 			.style("left", (d3.event.pageX) + "px")
 	        .style("top", (d3.event.pageY) + "px")
 			.style("opacity", 1.0);
@@ -200,7 +193,7 @@ stroke-opacity: .2;
 		})
 		.on("mouseout", function (d) {
 			d3.select(this)
-			.style("fill", function (it) { return color(it.total); })
+			.style("fill", function (it) { return color2(it.total); })
 			.attr("r", function (it) { return it.r; });
 
 			tooltip.style("opacity", 0);
@@ -213,6 +206,7 @@ stroke-opacity: .2;
 			d3.select(this).style("stroke", "black").style("stroke-width", 2);
 			d3.select("#category").text(d.name);
 			compareSvg.selectAll("*").remove();
+			d3.select("#salary").on("click")();
 		});
 
 	    d3.select("svg").selectAll("text").data(nodes).enter()
@@ -225,12 +219,13 @@ stroke-opacity: .2;
 	    	if (it.r > 55) return it.name; 
 	    	else return it.short;
 	    });
+
+	    document.getElementById("salary").click();
 	});
 
 	var compareSvg = d3.select("#comparision").append("svg").attr("height", 200).attr("width", width);
-
-	var data;
 	var compare = d3.select("#category").text();
+	var data;
 
 	d3.select("#salary").on("click", function () {
 		d3.selectAll("button").style("background-color", "white").style("color", "black");
@@ -290,6 +285,10 @@ stroke-opacity: .2;
 
 		compareSvg.attr("height", 35 * names.length + 25);
 	});
+
+	
+
+	
 
 	//Major Category and Jobs
 	//http://bl.ocks.org/wvengen/cab9b01816490edb7083
