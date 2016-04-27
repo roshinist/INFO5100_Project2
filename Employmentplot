@@ -1,0 +1,276 @@
+<html>
+<head>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<style>
+body { font-family: "Open Sans"; }
+svg { border: none; }
+button { padding: 5px; }
+.area {
+  fill: url(#temperature-gradient);
+  stroke-width: 05px;
+}
+.tooltip {	
+    position: absolute;			
+    text-align: center;			
+    width: 260px;					
+    height: 90px;					
+    padding: 2px;				
+    font: 12px Futura;		
+    background: rgba(0, 0, 0, 0.8);	
+    color: gold;
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;			
+}
+path.slice{
+	stroke-width:2px;
+}
+
+polyline{
+	opacity: .3;
+	stroke: black;
+	stroke-width: 2px;
+	fill: none;
+}
+</style>
+</head>
+<body>
+<div id="empPlot2"></div>
+<div id="empPlot3"></div>
+<div>
+	<span id="EmpDeets"></span>
+</div>
+<div id="empPlot4"></div>
+<script>
+var height =1200;
+var width = 1200;
+var padding = 30;
+var xScale, colorScale1,colorScale2;
+
+var svg2 = d3.select("#empPlot2").append("svg").attr("height", height).attr("width", width);
+
+var svg4 = d3.select("#empPlot3").append("svg").attr("height", height).attr("width", width);
+
+
+
+// Majors employment plot
+d3.csv("recent-grads.csv", function (error, data) {
+	categories = data;
+	categories=categories.filter(function (category) {
+		return category["Major_category"]=="Engineering";
+	});
+
+(function(){
+	majorsEmployment = categories.map(function (major) {
+		return {
+			a: 1-Number(major["Unemployment_rate"]),
+			b: Number(major["Low_wage_jobs"]),
+			c: Number(major["Non_college_jobs"]),
+			total: Number(major["Employed"])+Number(major["Unemployed"]),
+			label: major["Major"]
+		};
+	});
+
+
+var empMax= d3.max(majorsEmployment,function(majorEmployment){
+return majorEmployment.a;
+});
+
+      outerRadius = 300;
+      color = d3.scale.category20();
+var tooltip = d3.select("body")
+	.append("div")
+	.attr("class", "tooltip")
+	.style("opacity", 0.0);
+
+var vis = svg2
+        .data([majorsEmployment]) 
+        .attr("width", width) 
+        .attr("height", height) 
+        .append("svg:g")
+          .attr("transform", "translate(" + width/2+ "," + height/2 + ")") 
+    var arc = d3.svg.arc()
+    	.innerRadius(outerRadius-180)
+      .outerRadius(outerRadius);
+
+    var pie = d3.layout.pie().sort(null).padAngle(0.0175).value(function(d) { return d.total; });;
+
+
+    var arcs = vis.selectAll("g.slice")
+      .data(pie)
+      .enter()
+      .append("svg:g")
+      .attr("class", "slice")
+    .on("mouseover", function (d,i) {
+			d3.select(this)
+		tooltip.html("<span style = 'font-size: 17px'>" + "<span style = 'color: #e34a33'>" + majorsEmployment[i].label + "</span>" + "</span>" + "<br>Total graduates: " + Number(majorsEmployment[i].total) + "<br>No. of Low Wage jobs: " + Number(majorsEmployment[i].b)+  "<br>No. of Non-college jobs: " + Number(majorsEmployment[i].c)+"<br>Employment Ratio: " + d3.format(".3r")(majorsEmployment[i].a*100) )
+			.style("left", (d3.event.pageX) + "px")
+	        .style("top", (d3.event.pageY) + "px")
+			.style("opacity", 1.0);
+			d3.select("body").style("cursor", "pointer");
+		})
+		.on("mouseout", function (d) {
+			d3.select(this)
+			.style("fill", function (it) { return color(it.total); })
+			tooltip.style("opacity", 0);
+			d3.select("body").style("cursor", "default");
+		})
+    .on('click',function(d,i){
+       d3.select(this)
+        .transition()
+        .duration(500)
+        .attr("transform",function(d){
+            if (!d.data._expanded){
+                d.data._expanded = true;
+                var a = d.startAngle + (d.endAngle - d.startAngle)/2 - Math.PI/2;
+                var x = Math.cos(a) * 20;
+                var y = Math.sin(a) * 20;
+                return 'translate(' + x + ',' + y + ')';                
+            } else {
+                d.data._expanded = false;
+                return 'translate(0,0)';                
+            }
+        }); 
+               d3.selectAll("g.slice").attr("transform", "translate(0, 0)");
+    });
+
+    arcs.append("svg:path")
+      .attr("fill", function(d, i) { return color(i); } )
+       //.style("opacity", function(d, i) { return .7*(1-majorsEmployment[i].c/majorsEmployment[i].total); })
+       .attr("d", function(d, i) { return arc.outerRadius(outerRadius+100*(1-Math.pow(200,empMax-majorsEmployment[i].a)))(d, i); });
+
+    arcs.append("svg:text")
+      .attr("transform", function(d) { 
+        d.outerRadius = outerRadius + 50; 
+        d.innerRadius = outerRadius + 45;
+        	var c=arc.centroid(d);
+            var x = c[0];
+            var y = c[1];
+            // pythagorean theorem for hypotenuse
+            h = Math.sqrt(x*x + y*y);
+        return "translate(" + (x/h * d.outerRadius) +  ',' +
+           (y/h * d.outerRadius) +  ")"; 
+      })
+      .attr("text-anchor", "middle") 
+      .style("fill",function(d, i) { return color(i); })
+      .style("font", "bold 12px Arial")
+      .text(function(d, i) { if(d.endAngle-d.startAngle>(2*Math.PI/majorsEmployment.length)) return majorsEmployment[i].label; }); 
+
+
+})();
+
+
+});
+
+
+// Categories employment plot
+
+d3.csv("categories.csv", function (error, data) {
+	categories = data;
+(function(){
+	majorsEmployment = categories.map(function (major) {
+		return {
+			a: 1-Number(major["Unemployment_rate"]),
+			b: Number(major["Low_wage_jobs"]),
+			c: Number(major["Non_college_jobs"]),
+			total: Number(major["Employed"])+Number(major["Unemployed"]),
+			label: major["Major_category"]
+		};
+	});
+
+
+var empMax= d3.max(majorsEmployment,function(majorEmployment){
+return majorEmployment.a;
+});
+
+      outerRadius = 300;
+      color = d3.scale.category20();
+
+var tooltip = d3.select("body")
+	.append("div")
+	.attr("class", "tooltip")
+	.style("opacity", 0.0);
+
+var vis = svg4
+        .data([majorsEmployment]) 
+        .attr("width", width) 
+        .attr("height", height) 
+        .append("svg:g")
+          .attr("transform", "translate(" + 1.5*outerRadius + "," + 1.5*outerRadius + ")") 
+    var arc = d3.svg.arc()
+    	.innerRadius(outerRadius-180)
+      .outerRadius(outerRadius);
+
+    var pie = d3.layout.pie().sort(null).padAngle(0.0175).value(function(d) { return d.total; });;
+
+    console.log(majorsEmployment);
+    var arcs = vis.selectAll("g.slice")
+      .data(pie)
+      .enter()
+      .append("svg:g")
+      .attr("class", "slice")
+    .on("mouseover", function (d,i) {
+			d3.select(this)
+			.style("fill", "gold")
+			.attr("r", function (i) { return i.outerRadius * 1.2; });
+			tooltip.html("<span style = 'font-size: 17px'>" + "<span style = 'color: #e34a33'>" + majorsEmployment[i].label + "</span>" + "</span>" + "<br>Total graduates: " + Number(majorsEmployment[i].total) + "<br>No. of Low Wage jobs: " + Number(majorsEmployment[i].b)+ "<br>No. of Non-college jobs: " + Number(majorsEmployment[i].c)+ "<br>Employment Ratio: " + d3.format(".3r")(majorsEmployment[i].a*100) )
+			.style("left", 900 + "px")
+	        .style("top", 700 + "px")
+			.style("opacity", 1.0);
+			d3.select("body").style("cursor", "pointer");
+		})
+		.on("mouseout", function (d) {
+			d3.select(this)
+			tooltip.style("opacity", 0);
+			d3.select("body").style("cursor", "default");
+		})
+    .on('click',function(d,i){
+
+       d3.select(this)
+        .transition()
+        .duration(500)
+        .attr("transform",function(d){
+            if (!d.data._expanded){
+                d.data._expanded = true;
+                var a = d.startAngle + (d.endAngle - d.startAngle)/2 - Math.PI/2;
+                var x = Math.cos(a) * 20;
+                var y = Math.sin(a) * 20;
+                return 'translate(' + x + ',' + y + ')';                
+            } else {
+                d.data._expanded = false;
+                return 'translate(0,0)';                
+            }
+        }); 
+       d3.selectAll("g.slice").attr("transform", "translate(0, 0)");
+    });
+
+    arcs.append("svg:path")
+      .attr("fill", function(d, i) { return color(i); } )
+       .attr("d", function(d, i) { return arc.outerRadius(outerRadius+100*(1-Math.pow(200,empMax-majorsEmployment[i].a)))(d, i); });
+
+   arcs.append("svg:text")
+      .attr("transform", function(d,i) { 
+        d.outerRadius = outerRadius + 50; 
+        d.innerRadius = outerRadius + 45;
+	  	var c=arc.centroid(d);
+            var x = c[0];
+            var y = c[1];
+            h = Math.sqrt(x*x + y*y);
+        return "translate(" + (x/h * d.outerRadius+27) +  ',' +
+           ((y/h * d.outerRadius) +i) +  ")"; 
+      })
+      .attr("text-anchor", "middle")
+      .style("fill",function(d, i) { return color(i); }) 
+      .style("font", "bold 14px Arial")
+      .text(function(d, i) { return majorsEmployment[i].label; });
+
+
+})();
+
+
+});
+</script>	
+
+</body>
+</html>
