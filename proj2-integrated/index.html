@@ -684,6 +684,8 @@ polyline {
       	.attr("fill", function (d, i) { 
       		return color(i); 
       	})
+      	.attr("d", 0)
+      	.transition().duration(1500)
         .attr("d", function (d, i) { return arc.outerRadius(outerRadius + 100 * (1 - Math.pow(200, empMax - data[i].employedRatio)))(d, i); });
         compareSvg.attr("height", 750);
 	});
