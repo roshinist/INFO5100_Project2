@@ -31,8 +31,8 @@ text {
 .tooltip2 {	
     position: absolute;			
     text-align: center;			
-    width: 120px;					
-    height: 30px;					
+    width: 200px;					
+    height: 100px;					
     padding: 2px;				
     font: 12px Futura;		
     background: rgba(0, 0, 0, 0.8);	
@@ -90,6 +90,10 @@ text-shadow: 0 1px 0 #fff;
 fill: none;
 stroke: #000;
 stroke-opacity: .2;
+}
+
+.link:hover{
+	stroke-opacity: .4;
 }
 </style>
 </head>
@@ -248,6 +252,12 @@ stroke-opacity: .2;
 	var compareSvg = d3.select("#comparision").append("svg").attr("height", 200).attr("width", width);
 	var compare = d3.select("#category").text();
 	var data;
+/********************************************************************************************************************************/
+	//Make sure tool tip displays just after page loads
+	var x = tooltip2.html("<span style = 'font-size: 13px'>" + "<br><span style = 'color: #bdbdbd'>" + "</span>" + "</span>" + "<br>" + "<p>Hover over a bar to know more</p>")
+			.style("left", 70 + "vw")
+	        .style("top", (width + 400) + "px")
+			.style("opacity", 1.0);;
 
 	d3.select("#salary").on("click", function () {
 		d3.selectAll("button").style("background-color", "white").style("color", "black");
@@ -289,15 +299,16 @@ stroke-opacity: .2;
 			return color2(i);
 		})
 		.on("mouseover", function (d, i) {
-			tooltip2.html("<span style = 'font-size: 13px'>" + "<span style = 'color: #bdbdbd'>" + "Total Graduates" + "</span>" + "</span>" + "<br>" + numberFormat(totalGraduates[i]))
-			.style("left", (d3.event.pageX) + "px")
-	        .style("top", (d3.event.pageY) + "px")
+/********************************************************************************************************************************/
+			tooltip2.html("<span style = 'font-size: 13px'>" + "<br><span style = 'color: #bdbdbd'>" + "Total Number of Graduates" + "</span>" + "</span>" + "<br><p>" + numberFormat(totalGraduates[i]) + "</p>")
+			.style("left", 70 + "vw")
+	        .style("top", (width + 600) + "px")
 			.style("opacity", 1.0);
 
 			d3.select("body").style("cursor", "pointer");
 		})
 		.on("mouseout", function (d) {
-			tooltip2.style("opacity", 0);
+			tooltip2.html("<span style = 'font-size: 13px'>" + "<br><span style = 'color: #bdbdbd'>" + "</span>" + "</span>" + "<br>" + "<p>Hover over a bar to know more</p>")
 
 			d3.select("body").style("cursor", "default");
 		});
@@ -327,6 +338,9 @@ stroke-opacity: .2;
 	});
 
 	d3.select("#genderRatio").on("click", function () {
+		//make tooltip2 disapper
+		tooltip2.style("opacity", 0);
+
 		d3.selectAll("button").style("background-color", "white").style("color", "black");
 		d3.select("#genderRatio").style("background-color", "black").style("color", "white");
 		compareSvg.selectAll("rect").remove();
@@ -483,6 +497,9 @@ stroke-opacity: .2;
 	});
 
 	d3.select("#employedRatio").on("click", function () {
+		//make tooltip2 disapper
+		tooltip2.style("opacity", 0);
+
 		d3.selectAll("button").style("background-color", "white").style("color", "black");
 		d3.select("#employedRatio").style("background-color", "black").style("color", "white");
 		compareSvg.selectAll("rect").remove();
@@ -491,6 +508,8 @@ stroke-opacity: .2;
 
 	//Major Category and Jobs
 	//http://bl.ocks.org/wvengen/cab9b01816490edb7083
+
+	//Colors for each major 
     var colors = {
             'biology':         '#1f77b4',
             'socialSci':       '#aec7e8',
@@ -507,12 +526,13 @@ stroke-opacity: .2;
             'comp':            '#e377c2',
             'law':             '#f7b6d2',
             'end':             '#7f7f7f',
-            'fallback':         '#9f9fa3'
+            'fallback':         '#9f9fa3'	//For everything besides starting nodes and links, will be set to this fallback color
           };
     var heightS = 700, widthS = 1000, paddingS = 50;
     d3.json("major_jobs.json", function(error, json) {
         jobs = json;
 
+        //Calll Sankey.path to call hovering function applied to paths.
         var chart = d3.select("#sankey")
                         .append("svg")
                         .attr("height", heightS)
@@ -524,11 +544,11 @@ stroke-opacity: .2;
         }
 
         function colorSankey(node, depth) {
+        	//remove the word following _
           var id = node.id.replace(/(_score)?(_\d+)?$/, '');
           if (colors[id]) {
             return colors[id];
           } else if (depth > 0 && node.targetLinks && node.targetLinks.length == 1) {
-            //return colorSankey(node.targetLinks[0].source, depth-1);
             return colors['end'];
           } else {
             return null;
@@ -544,7 +564,7 @@ stroke-opacity: .2;
                 })
                 .nodeWidth(15)
                 .nodePadding(10)
-                .spread(true)
+                .spread(true)		//Remove curvatures and allow for 
                 .iterations(10)
                 .draw(jobs);
       });
