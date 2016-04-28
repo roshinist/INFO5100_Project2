@@ -306,6 +306,8 @@
 			var width = 900;
 			var padding = 50;
 
+			var clicked = [1, 0, 0];
+
 			var choosen = 1;
 
 			var svg = d3.select("#bubbles").append("svg").attr("height", height).attr("width", width);
@@ -427,19 +429,11 @@
 					d3.select(this).style("stroke", "black").style("stroke-width", 2);
 					d3.select("#category").text(d.name);
 					compareSvg.selectAll("*").remove();
-					d3.select("#salary").on("click")();
+					clickButton(clicked);
 
 					// When clicking the bubble, the page will scroll down to the comparasion section
-					d3.transition()
-		    		.duration(100)
-		    		.tween("scroll", scrollTween(document.body.getBoundingClientRect().height - window.innerHeight));
-
-		    		function scrollTween(offset) {
-		  				return function () {
-		    				var i = d3.interpolateNumber(window.pageYOffset || document.documentElement.scrollTop, offset);
-		    				return function (t) { scrollTo(0, i(t) * 0.45); };
-		  				};
-					};
+					var divPosition = $('#learnMore').offset();
+					$('html, body').animate({scrollTop: divPosition.top}, "slow");
 				});
 
 			    d3.select("svg").selectAll("text").data(nodes).enter()
@@ -464,6 +458,7 @@
 			var data;
 
 			d3.select("#salary").on("click", function () {
+				clicked = [1, 0, 0];
 				tooltip.style("opacity", 0);
 				d3.selectAll("button").style("background-color", "white").style("color", "black");
 				d3.select("#salary").style("background-color", "black").style("color", "white");
@@ -543,6 +538,7 @@
 			});
 
 			d3.select("#genderRatio").on("click", function () {
+				clicked = [0, 1, 0];
 				d3.selectAll("button").style("background-color", "white").style("color", "black");
 				d3.select("#genderRatio").style("background-color", "black").style("color", "white");
 				tooltip.style("opacity", 0);
@@ -688,6 +684,12 @@
 		    	compareSvg.append("image").attr("x", width / 2).attr("y", 0).attr("width", 30).attr("height", 30)
 		    	.attr("xlink:href", "img/male.svg");
 
+		    	var ratio = [1, 1];
+
+		    	compareSvg.selectAll("text.ratio").data(ratio).enter().append("text").attr("x", width / 6 + 50).attr("y", 0).text(function (d, i) {
+		    		return ratio[i];
+		    	});
+
 		    	var transitLeft = compareSvg.selectAll("rect").filter(function (d) {
 		    		return d3.select(this).attr("class") == "areaLeft";
 		    	})
@@ -710,6 +712,7 @@
 			});
 
 			d3.select("#employedRatio").on("click", function () {
+				clicked = [0, 0, 1];
 				tooltip.html("<span style = 'font-size: 16px'>" + "<span style = 'color: #efedf5'>" + "Hover on Arcs to See Details" + "</span>" + "</span>")
 				.style("left", 70 + "vw")
 			    .style("top", 2200 + "px")
@@ -743,7 +746,7 @@
 		      	.outerRadius(outerRadius);
 
 		      	var pie = d3.layout.pie().sort(null).padAngle(0.0175).value(function (d) { 
-		      		return d.employedPeople; 
+		      		return d.total; 
 		      	});
 
 		      	var arcs = vis.selectAll("g.slice").data(pie).enter()
@@ -822,6 +825,16 @@
 				d3.select("#salary").on("click")();
 				d3.selectAll("circle").style("stroke", null);
 			});
+
+			function clickButton(clicked) {
+				if (clicked[0] == 1) {
+					d3.select("#salary").on("click")();
+				}
+				else if (clicked[1] == 1) {
+					d3.select("#genderRatio").on("click")();
+				}
+				else d3.select("#employedRatio").on("click")();
+			}
 
 			//Major Category and Jobs
 			//http://bl.ocks.org/wvengen/cab9b01816490edb7083
