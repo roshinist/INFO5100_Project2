@@ -32,8 +32,8 @@
 		    position: absolute;			
 		    text-align: center;			
 		    width: 300px;					
-		    height: 100px;					
-		    padding: 2px;				
+		    height: 105px;					
+		    padding: 8px;				
 		    font: 12px Futura;		
 		    background: rgba(0, 0, 0, 0.8);	
 		    color: gold;
@@ -51,34 +51,6 @@
 		    font: 12px Futura;		
 		    background: rgba(0, 0, 0, 0.8);	
 		    color: #efedf5;
-		    border: 0px;		
-		    border-radius: 8px;			
-		    pointer-events: none;			
-		}
-
-		.tooltip3 {	
-		    position: absolute;			
-		    text-align: center;			
-		    width: 120px;					
-		    height: 30px;					
-		    padding: 2px;				
-		    font: 12px Futura;		
-		    background: null;	
-		    color: #525252;
-		    border: 0px;		
-		    border-radius: 8px;			
-		    pointer-events: none;			
-		}
-
-		.tooltip4 {	
-		    position: absolute;			
-		    text-align: center;			
-		    width: 120px;					
-		    height: 30px;					
-		    padding: 2px;				
-		    font: 12px Futura;		
-		    background: null;	
-		    color: #525252;
 		    border: 0px;		
 		    border-radius: 8px;			
 		    pointer-events: none;			
@@ -107,7 +79,7 @@
 		    font-size: 16px;
 		    font-family: Futura;
 		    padding: 15px;
-		    width: 180px; 
+		    width: 220px; 
 		    margin: 0px 40px 20px 0;
 		    opacity: 1.0;
 		    -webkit-transition-duration: 0.4s;
@@ -121,6 +93,12 @@
 
 		.div {
 			text-align: center;
+		}
+
+		.div2 {
+			position: absolute;
+			text-align: center;
+			right: 400px;
 		}
 
 		#chart {
@@ -157,6 +135,14 @@
 			stroke: black;
 			stroke-width: 2px;
 			fill: none;
+		}
+
+		.navbar-fixed-top {
+			background-color: #1A242F;
+		}
+
+		.navbar-shrink {
+			background-color: #1A242F;
 		}
 		</style>
 	</head>
@@ -216,7 +202,7 @@
 						<div class = "col-lg-12 text-center">
 		                    <h2>Where does your interest lie?</h2>
 		                    <hr class = "star-primary">
-		                    <!-- <p style= "font-size: 18px"> The larger the bubble, the more the number of graduates with a degree in that category.</p> -->
+		                    <p style= "font-size: 18px"> The larger the bubble, the more the number of graduates with a degree in that category.</p>
 		                </div>
 						<div id = "bubbles" class = "div"></div>
 				</div>
@@ -233,7 +219,7 @@
 	            </div>
 	            <div class = "row">
 	                <div class = "col-lg-12 text-center">
-	                    <p>Understand what to expect after choosing a specific category above</p>
+	                    <p>Understand what to expect after choosing a specific category above.</p>
 	                </div>
 	            </div>
 	            <br>
@@ -245,11 +231,16 @@
 					<div id = "buttons" class = "div">
 						<button id = "salary" class = "button">Median Annual Salary</button>
 						<button id = "genderRatio" class = "button">Gender Ratio</button>
-						<button id = "employedRatio" class = "button">Employed Ratio</button>
+						<button id = "employedRatio" class = "button">Employed Statistics</button>
 					</div>
 
 					<div class = "div">
-						<button id = "reset" class = "button2">View All Categories</button>
+						<button id = "reset" class = "button2">Return to All Categories</button>
+					</div>
+
+					<div id = "showRatio" class = "div2" style = "left: 100px">
+						<span id = "female"></span>
+ 						<span id = "male"></span>
 					</div>
 
 					<div id = "comparision" class = "div"></div>
@@ -269,6 +260,7 @@
 	                    <h2>Where can you see yourself?</h2>
 	                    <hr class = "star-light">
 	                    <p>Fields and occupations you can expect to work in/as with a specific degree.</p>
+	                    <p>The width of the link is directly proportional to number of graduates working in that line of field.<p> 
 	                </div>
 	            </div>
 			</div>
@@ -341,8 +333,7 @@
 			var majors, categories;
 			var majorInfo, categoryInfo;
 
-			var color = d3.scale.category20();
-			var color2 = d3.scale.category20c();
+			var color = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '9edae5', '#9f9fa3', '#393b79', '#637939', '#8c6d31', '#843c39', '#7b4173', '#6b6ecf', '#ad494a', '#8ca252', '#a55194'];
 
 			d3.csv("recent-grads.csv", function (error, data) {
 				majorInfo = data;
@@ -356,7 +347,7 @@
 						total: Number(info["Men"]) + Number(info["Women"]),
 						femaleRatio: Number(info["ShareWomen"]),
 						employedRatio: 1 - Number(info["Unemployment_rate"]),
-						employedPeople: Number(info["Employed"]),
+						workedPeople: Number(info["Employed"]) + Number(info["Unemployed"]),
 						earning: Number(info["Median"]),
 						lowWage: Number(info["Low_wage_jobs"]),
 						noncollege: Number(info["Non_college_jobs"])
@@ -378,7 +369,7 @@
 						total: Number(info["Total"]),
 						femaleRatio: Number(info["ShareWomen"]),
 						employedRatio: 1 - Number(info["Unemployment_rate"]),
-						employedPeople: Number(info["Employed"]),
+						workedPeople: Number(info["Employed"]) + Number(info["Unemployed"]),
 						earning: Number(info["Median"]),
 						short: info["Short"],
 						lowWage: Number(info["Low_wage_jobs"]),
@@ -400,7 +391,7 @@
 			    .append("circle")            
 			    .attr("cx", function (it) { return it.x; })
 			    .attr("cy", function (it) { return it.y; })
-			    .style("fill", function (it) { return color2(it.total); })
+			    .style("fill", function (it, i) { return color[i]; })
 			    .attr("r", function (it) { return it.r; })
 			    .on("mouseover", function (d) {
 					d3.select(this)
@@ -414,9 +405,9 @@
 
 					d3.select("body").style("cursor", "pointer");
 				})
-				.on("mouseout", function (d) {
+				.on("mouseout", function (d, i) {
 					d3.select(this)
-					.style("fill", function (it) { return color2(it.total); })
+					.style("fill", function (it) { return color[i]; })
 					.attr("r", function (it) { return it.r; });
 
 					tooltip.style("opacity", 0);
@@ -497,20 +488,16 @@
 					return 35 * i + 20;
 				}).attr("width", 0)
 				.style("fill", function (d, i) {
-					return color2(i);
+					return color[i];
 				})
 				.on("mouseover", function (d, i) {
 					tooltip2.html("<span style = 'font-size: 15px'>" + "<span style = 'color: #9e9ac8'>" + "Total Graduates" + "</span>" + "</span>" + "<br>" + numberFormat(totalGraduates[i]))
 					.style("left", (d3.event.pageX) + "px")
 			        .style("top", (d3.event.pageY) + "px")
 					.style("opacity", 1.0);
-
-					d3.select("body").style("cursor", "pointer");
 				})
 				.on("mouseout", function (d) {
 					tooltip2.style("opacity", 0);
-
-					d3.select("body").style("cursor", "default");
 				});
 
 				var transit = compareSvg.selectAll("rect").data(salaries)
@@ -546,6 +533,8 @@
 				compareSvg.selectAll("text").remove();
 				compareSvg.selectAll("image").remove();
 				compareSvg.selectAll("g.slice").remove();
+				d3.select("#female").style("opacity", 0);
+				d3.select("#male").style("opacity", 0);
 
 				compare = d3.select("#category").text();
 				if (compare != "All Categories") {
@@ -609,22 +598,17 @@
 		        .attr("height", 19)
 		        .style("fill", "url(#maleGradient)")
 		        .on("mouseover", function (d, i) {
-					tooltip3.html(percentFormat(xScale.invert(d3.select(compareSvg.selectAll("rect")[0][i]).attr("width"))))
-					.style("left", 37 + "vw")
-			        .style("top", 2170 + 35 * i + "px")
-			        .style("font-size", 14)
-					.style("opacity", 1.0);
-					tooltip4.html(percentFormat(1 - xScale.invert(d3.select(compareSvg.selectAll("rect")[0][i]).attr("width"))))
-					.style("left", 33.5 + "vw")
-			        .style("top", 2170 + 35 * i + "px")
-			        .style("font-size", 14)
-					.style("opacity", 1.0);
+					document.getElementById("male").innerHTML = percentFormat(xScale.invert(d3.select(compareSvg.selectAll("rect")[0][i]).attr("width")));
+					document.getElementById("female").innerHTML = percentFormat(1 - xScale.invert(d3.select(compareSvg.selectAll("rect")[0][i]).attr("width"))) + " : ";
+					d3.select("#female").style("opacity", 1);
+					d3.select("#male").style("opacity", 1);
 
 					d3.select("body").style("cursor", "pointer");
 				})
 				.on("mouseout", function (d) {
-					tooltip3.style("opacity", 0);
-					tooltip4.style("opacity", 0);
+					tooltip.style("opacity", 0);
+					d3.select("#female").style("opacity", 0);
+					d3.select("#male").style("opacity", 0);
 
 					d3.select("body").style("cursor", "default");
 				});
@@ -644,24 +628,17 @@
 		        .attr("height", 19)
 		        .style("fill", "url(#femaleGradient)")
 		        .on("mouseover", function (d, i) {
-					tooltip3.html(percentFormat(xScale.invert(d3.select(compareSvg.selectAll("rect")[0][i]).attr("width"))))
-					.style("left", 37 + "vw")
-			        .style("top", 2170 + 35 * i + "px")
-			        .style("font-size", 14)
-					.style("opacity", 1.0);
-
-					tooltip4.html(percentFormat(1 - xScale.invert(d3.select(compareSvg.selectAll("rect")[0][i]).attr("width"))))
-					.style("left", 33.5 + "vw")
-			        .style("top", 2170 + 35 * i + "px")
-			        .style("font-size", 14)
-					.style("opacity", 1.0);
+					document.getElementById("male").innerHTML = percentFormat(xScale.invert(d3.select(compareSvg.selectAll("rect")[0][i]).attr("width")));
+					document.getElementById("female").innerHTML = percentFormat(1 - xScale.invert(d3.select(compareSvg.selectAll("rect")[0][i]).attr("width"))) + " : ";
+					d3.select("#female").style("opacity", 1);
+					d3.select("#male").style("opacity", 1);
 
 					d3.select("body").style("cursor", "pointer");
 				})
 				.on("mouseout", function (d) {
-					tooltip3.style("opacity", 0);
-					tooltip4.style("opacity", 0);
-
+					tooltip.style("opacity", 0);
+					d3.select("#female").style("opacity", 0);
+					d3.select("#male").style("opacity", 0);
 					d3.select("body").style("cursor", "default");
 				});
 
@@ -681,14 +658,8 @@
 
 		    	compareSvg.append("image").attr("x", width / 6).attr("y", 0).attr("width", 30).attr("height", 30)
 		    	.attr("xlink:href", "img/female.svg");
-		    	compareSvg.append("image").attr("x", width / 2).attr("y", 0).attr("width", 30).attr("height", 30)
+		    	compareSvg.append("image").attr("x", width / 2 - 50).attr("y", 0).attr("width", 30).attr("height", 30)
 		    	.attr("xlink:href", "img/male.svg");
-
-		    	var ratio = [1, 1];
-
-		    	compareSvg.selectAll("text.ratio").data(ratio).enter().append("text").attr("x", width / 6 + 50).attr("y", 0).text(function (d, i) {
-		    		return ratio[i];
-		    	});
 
 		    	var transitLeft = compareSvg.selectAll("rect").filter(function (d) {
 		    		return d3.select(this).attr("class") == "areaLeft";
@@ -713,9 +684,9 @@
 
 			d3.select("#employedRatio").on("click", function () {
 				clicked = [0, 0, 1];
-				tooltip.html("<span style = 'font-size: 16px'>" + "<span style = 'color: #efedf5'>" + "Hover on Arcs to See Details" + "</span>" + "</span>")
-				.style("left", 70 + "vw")
-			    .style("top", 2200 + "px")
+				tooltip.html("<span style = 'font-size: 16px'>" + "<span style = 'color: #efedf5'>" + "Radius: Employment Ratio" + "<br>Angle: No. of Job Seekers" + "<br><br>Hover over Arcs to See Details" + "</span>" + "</span>")
+				.style("left", 75 + "vw")
+			    .style("top", 2600 + "px")
 				.style("opacity", 1.0);
 				d3.selectAll("button").style("background-color", "white").style("color", "black");
 				d3.select("#employedRatio").style("background-color", "black").style("color", "white");
@@ -746,7 +717,7 @@
 		      	.outerRadius(outerRadius);
 
 		      	var pie = d3.layout.pie().sort(null).padAngle(0.0175).value(function (d) { 
-		      		return d.total; 
+		      		return d.workedPeople; 
 		      	});
 
 		      	var arcs = vis.selectAll("g.slice").data(pie).enter()
@@ -754,13 +725,21 @@
 		      	.attr("class", "slice")
 		      	.on("mouseover", function (d, i) {
 					d3.select(this)
-					tooltip.html("<span style = 'font-size: 15px'>" + "<span style = 'color: #e34a33'>" + data[i].name + "</span>" + "</span>" + "<br>Total Employed Graduates: " + numberFormat(data[i].employedPeople) + "<br>No. of Low Wage jobs: " + numberFormat(data[i].lowWage) + "<br>No. of Non-College Degree jobs: " + numberFormat(data[i].noncollege)+ "<br>Employment Ratio: " + percentFormat(data[i].employedRatio))
-					.style("left", 70 + "vw")
-			        .style("top", 2200 + "px")
+					tooltip.html("<span style = 'font-size: 15px'>" + "<span style = 'color: #e34a33'>" + data[i].name + "</span>" + "</span>" + "<br>Job Seekers: " + numberFormat(data[i].workedPeople) + "<br>Employment Ratio: " + percentFormat(data[i].employedRatio) + "<br>No. of Low Wage jobs: " + numberFormat(data[i].lowWage) + "<br>No. of Non-College Degree jobs: " + numberFormat(data[i].noncollege))
+					.style("left", 75 + "vw")
+			        .style("top", 2600 + "px")
 					.style("opacity", 1.0);
 
 					compareSvg.append("text")
 			        .attr("id", "textName")
+			        .attr("x", 450)
+			        .attr("y", 330)
+			        .text("")
+			        .style("font-size", 16)
+			        .attr("text-anchor", "middle");
+
+			        compareSvg.append("text")
+			        .attr("id", "jobSeeker")
 			        .attr("x", 450)
 			        .attr("y", 360)
 			        .text("")
@@ -794,10 +773,11 @@
 		        	});
 
 					document.getElementById("textName").innerHTML = data[i].name;
-					document.getElementById("rate").innerHTML = percentFormat(data[i].employedRatio);
+					document.getElementById("jobSeeker").innerHTML = "Job Seekers: " + numberFormat(data[i].workedPeople);
+					document.getElementById("rate").innerHTML = "Employment Ratio: " + percentFormat(data[i].employedRatio);
 				})
 				.on("mouseout", function (d) {
-					tooltip.html("<span style = 'font-size: 16px'>" + "<span style = 'color: #efedf5'>" + "Hover on Arcs to See Details" + "</span>" + "</span>")
+					tooltip.html("<span style = 'font-size: 16px'>" + "<span style = 'color: #efedf5'>" + "Radius: Employment Ratio" + "<br>Angle: No. of Job Seekers" + "<br><br>Hover over Arcs to See Details" + "</span>" + "</span>")
 					compareSvg.selectAll("text").remove(); 
 
 					d3.selectAll("g.slice")
@@ -811,7 +791,7 @@
 
 		      	arcs.append("svg:path")
 		      	.attr("fill", function (d, i) { 
-		      		return color(i); 
+		      		return color[i]; 
 		      	})
 		      	.attr("d", function (d, i) { return arc.outerRadius(outerRadius - outerRadius)(d, i); })
 		      	.transition().duration(1500)
